@@ -6,13 +6,15 @@ from api.models import Jog
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'groups')
+        fields = ('url', 'username', 'email', 'first_name', 'last_name', 'password')
+        extra_kwargs = {'password': {'write_only': True}}
 
-
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Group
-        fields = ('url', 'name')
+        def restore_object(self, attrs, instance=None):
+            # call set_password on user object. Without this
+            # the password will be stored in plain text.
+            user = super(UserSerializer, self).restore_object(attrs, instance)
+            user.set_password(attrs['password'])
+            return user
 
 
 class JogSerializer(serializers.HyperlinkedModelSerializer):

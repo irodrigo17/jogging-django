@@ -1,7 +1,11 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
-from api.serializers import UserSerializer, GroupSerializer, JogSerializer
+from rest_framework.decorators import detail_route, list_route
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from api.serializers import UserSerializer, JogSerializer
 from api.models import Jog
+from api.permissions import IsStaffOrTargetUser
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -11,13 +15,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-
-class GroupViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    def get_permissions(self):
+        # allow non-authenticated user to create via POST
+        return [(AllowAny() if self.request.method == 'POST' else IsStaffOrTargetUser())]
 
 
 class JogViewSet(viewsets.ModelViewSet):
