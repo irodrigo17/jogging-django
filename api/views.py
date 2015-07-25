@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from api.serializers import UserSerializer, JogSerializer
 from api.models import Jog
-from api.permissions import IsStaffOrTargetUser
+from api.permissions import UserPermission, JogPermission
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -14,10 +14,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def get_permissions(self):
-        # allow non-authenticated user to create via POST
-        return [(AllowAny() if self.request.method == 'POST' else IsStaffOrTargetUser())]
+    permission_classes = [UserPermission]
 
 
 class JogViewSet(viewsets.ModelViewSet):
@@ -26,3 +23,10 @@ class JogViewSet(viewsets.ModelViewSet):
     """
     queryset = Jog.objects.all()
     serializer_class = JogSerializer
+    permission_classes = [JogPermission]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        return Jog.objects.filter(user=self.request.user)
